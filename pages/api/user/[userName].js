@@ -12,7 +12,7 @@ export default async function userHandler(req, res) {
     case "GET":
       try {
         // get todo from your database
-        const todos = await prisma.user.findUniqueOrThrow({
+        const { todos } = await prisma.user.findUniqueOrThrow({
           where: {
             name: userName,
           },

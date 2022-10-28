@@ -1,8 +1,9 @@
-import useSWR from "swr";
-import { fetcher } from "../../apiUtils";
+import { useCallback, useEffect, useState } from "react";
+import useSWR, { mutate } from "swr";
+import { fetcher, updateTodo as todoUpdater } from "../../apiUtils";
 
 const Todo = ({ user }) => {
-  const { data, error } = useSWR(`/api/user/${user}`, fetcher, {
+  const { data: todoList, error } = useSWR(`/api/user/${user}`, fetcher, {
     onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
       // Never retry on 404.
       if (error.status === 404) return;
@@ -19,11 +20,14 @@ const Todo = ({ user }) => {
   });
 
   if (error) return <div>failed to load</div>;
-  if (!data) return <div>loading...</div>;
+  if (!todoList) return <div>loading...</div>;
 
-  console.log(data, error);
+  const deleteTodo = (id) => {
+    const newTodoList = Array.from(todoList).filter((el) => el.id !== id);
+    mutate(`/api/user/${user}`, newTodoList);
+    // setTodoList(newTodoList);
+  };
 
-  const todoList = data?.todos;
   return (
     <div className=" bg-gray-200 text-gray-800 flex flex-col  items-center h-screen pt-24  ">
       {/* user name  */}
@@ -57,17 +61,26 @@ const Todo = ({ user }) => {
             type="text"
             placeholder="what is your plan for today"
             className=" rounded-sm shadow-sm px-4 py-2 border border-gray-200 w-full mt-4"
-            //  @keydown.enter="addTodo()"
           />
 
           {/* Todo list */}
           <ul className="todo-list mt-4">
             {/* todo list  */}
-            {todoList.map((todo) => (
-              <TodoItem key={todo.id} todo={todo}>
-                {todo.task}
-              </TodoItem>
-            ))}
+
+            {todoList ? (
+              todoList.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  user={user}
+                  deleteTodo={deleteTodo}
+                >
+                  {todo.task}
+                </TodoItem>
+              ))
+            ) : (
+              <div>No items</div>
+            )}
           </ul>
         </div>
       </div>
@@ -75,21 +88,33 @@ const Todo = ({ user }) => {
   );
 };
 
-const TodoItem = ({ todo }) => {
-  return (
-    <li
-      className="flex justify-between items-center mt-3"
-      x-show="todo.title !== ''"
-    >
-      <div
-        className="flex items-center"
-        // :className="{'line-through' : todo.isComplete}"
-      >
-        <input type="checkbox" name="" id="" x-model="todo.isComplete" />
-        <div className="capitalize ml-3 text-sm font-semibold">{todo.task}</div>
+const TodoItem = ({ todo, deleteTodo, user }) => {
+  const [done, setDone] = useState(todo.done);
+
+  const handleUpdate = () => {
+    setDone(!done);
+    // call the api
+    todoUpdater(todo.id, done);
+  };
+  return todo.task.length > 0 ? (
+    <li className="flex justify-between items-center mt-3">
+      <div className={`${done ? "line-through" : ""} flex items-center`}>
+        <input
+          type="checkbox"
+          name="done"
+          id={todo.id}
+          checked={done}
+          onChange={() => handleUpdate()}
+        />
+        <label
+          className="capitalize ml-3 text-sm font-semibold"
+          htmlFor={todo.id}
+        >
+          {todo.task}
+        </label>
       </div>
       <div>
-        <button>
+        <button onClick={() => deleteTodo(todo.id)}>
           <svg
             className=" w-4 h-4 text-gray-600 fill-current"
             // @click="deleteTodo(todo.id)"
@@ -105,7 +130,7 @@ const TodoItem = ({ todo }) => {
         </button>
       </div>
     </li>
-  );
+  ) : null;
 };
 
 export default Todo;
