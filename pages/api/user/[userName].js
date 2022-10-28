@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 export default async function userHandler(req, res) {
   const {
     query: { userName },
+    body,
     method,
   } = req;
 
@@ -17,7 +18,11 @@ export default async function userHandler(req, res) {
             name: userName,
           },
           include: {
-            todos: true,
+            todos: {
+              orderBy: {
+                id: "asc",
+              },
+            },
           },
         });
 
@@ -26,9 +31,24 @@ export default async function userHandler(req, res) {
         res.status(404).json({ error: error.message });
       }
       break;
+    case "POST":
+      const { task } = body;
+      try {
+        // get todo from your database
+        const newTodo = await prisma.todoItem.create({
+          data: {
+            ownerId: userName,
+            task,
+          },
+        });
+        res.status(200).json(newTodo);
+      } catch (error) {
+        res.status(404).json({ error: error.message });
+      }
+      break;
 
     default:
-      res.setHeader("Allow", ["GET"]);
+      res.setHeader("Allow", ["GET", "POST"]);
       res.status(405).end(`Method ${method} Not Allowed`);
   }
 }

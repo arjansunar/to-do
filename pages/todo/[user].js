@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
-import { fetcher, updateTodo as todoUpdater } from "../../apiUtils";
+import {
+  fetcher,
+  updateTodo as todoUpdater,
+  deleteTodo as todoDeleter,
+  createTodo,
+} from "../../apiUtils";
 
 const Todo = ({ user }) => {
+  const [task, setTask] = useState("");
+
   const { data: todoList, error } = useSWR(`/api/user/${user}`, fetcher, {
     onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
       // Never retry on 404.
@@ -22,10 +29,15 @@ const Todo = ({ user }) => {
   if (error) return <div>failed to load</div>;
   if (!todoList) return <div>loading...</div>;
 
-  const deleteTodo = (id) => {
-    const newTodoList = Array.from(todoList).filter((el) => el.id !== id);
-    mutate(`/api/user/${user}`, newTodoList);
-    // setTodoList(newTodoList);
+  const handleCreateTodo = () => {
+    mutate(
+      `/api/user/${user}`,
+      async (todos) => {
+        const { data: newTodo } = await createTodo(task, user);
+        return [...todos, newTodo];
+      },
+      { revalidate: false }
+    );
   };
 
   return (
@@ -39,12 +51,17 @@ const Todo = ({ user }) => {
         {/* todo wrapper */}
         <div className="bg-white rounded shadow px-4 py-4">
           <div className="title font-bold text-lg">Todo Application</div>
-          <div className="flex items-center text-sm mt-2">
-            <button
-            // @click="$refs.addTask.focus()"
-            >
+          <div className="flex items-center justify-center text-sm mt-4 gap-3">
+            <input
+              type="text"
+              placeholder="what is your plan for today"
+              className=" rounded-sm shadow-sm px-4 py-2 border border-gray-200 w-full"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+            />
+            <button onClick={handleCreateTodo}>
               <svg
-                className="w-3 h-3 mr-3 focus:outline-none"
+                className="w-3 h-3  focus:outline-none"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -55,13 +72,7 @@ const Todo = ({ user }) => {
                 <path d="M12 4v16m8-8H4"></path>
               </svg>
             </button>
-            <span>Click to add task</span>
           </div>
-          <input
-            type="text"
-            placeholder="what is your plan for today"
-            className=" rounded-sm shadow-sm px-4 py-2 border border-gray-200 w-full mt-4"
-          />
 
           {/* Todo list */}
           <ul className="todo-list mt-4">
@@ -69,12 +80,7 @@ const Todo = ({ user }) => {
 
             {todoList ? (
               todoList.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  user={user}
-                  deleteTodo={deleteTodo}
-                >
+                <TodoItem key={todo.id} todo={todo} user={user}>
                   {todo.task}
                 </TodoItem>
               ))
@@ -88,15 +94,37 @@ const Todo = ({ user }) => {
   );
 };
 
-const TodoItem = ({ todo, deleteTodo, user }) => {
+const TodoItem = ({ todo, user }) => {
   const [done, setDone] = useState(todo.done);
-
   const handleUpdate = () => {
+    // call the api and revalidates cache
+    mutate(
+      `/api/user/${user}`,
+      async (todos) => {
+        const { data: updatedTodo } = await todoUpdater(todo.id, !done);
+        const index = todos.findIndex((el) => el.id === todo.id);
+        console.log({ done, updatedTodo });
+        todos[index] = updatedTodo;
+        return [...todos];
+      },
+      { revalidate: false }
+    );
     setDone(!done);
-    // call the api
-    todoUpdater(todo.id, done);
   };
-  return todo.task.length > 0 ? (
+
+  const handleDelete = () => {
+    // call the api and revalidates cache
+    mutate(
+      `/api/user/${user}`,
+      async (todos) => {
+        todoDeleter(todo.id);
+        const filteredTodos = todos.filter((el) => el.id !== todo.id);
+        return [...filteredTodos];
+      },
+      { revalidate: false }
+    );
+  };
+  return todo.task ? (
     <li className="flex justify-between items-center mt-3">
       <div className={`${done ? "line-through" : ""} flex items-center`}>
         <input
@@ -114,7 +142,7 @@ const TodoItem = ({ todo, deleteTodo, user }) => {
         </label>
       </div>
       <div>
-        <button onClick={() => deleteTodo(todo.id)}>
+        <button onClick={() => handleDelete()}>
           <svg
             className=" w-4 h-4 text-gray-600 fill-current"
             // @click="deleteTodo(todo.id)"
