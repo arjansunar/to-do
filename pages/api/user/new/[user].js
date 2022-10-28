@@ -18,15 +18,17 @@ export default async function newUserHandler(req, res) {
           },
         });
         res.status(200).json(newUser);
+        break;
       } catch (error) {
         if (error.code === "P2002") {
           res
             .status(404)
             .json({ error: "User already exists", status: "P2002" });
+          break;
         }
         res.status(404).json({ error: error.message });
+        break;
       }
-      break;
 
     default:
       res.setHeader("Allow", ["POST"]);

@@ -34,7 +34,6 @@ export default function Home() {
       return;
     }
     // call api after verification
-    console.log(user);
     try {
       await createUser(user);
       router.push(`/todo/${user}`);

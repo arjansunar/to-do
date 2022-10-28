@@ -8,11 +8,9 @@ export default async function getTodos(req, res) {
     query: { id },
   } = req;
 
-  console.log(body);
   switch (method) {
     case "PATCH":
       const { done } = body;
-      console.log("patch", done);
       try {
         // get todo from your database
         const todo = await prisma.todoItem.update({
@@ -24,10 +22,11 @@ export default async function getTodos(req, res) {
           },
         });
         res.status(200).json(todo);
+        break;
       } catch (error) {
         res.status(404).json({ error: error.message });
+        break;
       }
-      break;
     case "DELETE":
       try {
         // delete todo from your database
@@ -37,8 +36,10 @@ export default async function getTodos(req, res) {
           },
         });
         res.status(200).json(deletedTodo);
+        break;
       } catch (error) {
         res.status(404).json({ error: error.message });
+        break;
       }
 
     default:

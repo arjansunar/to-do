@@ -113,7 +113,6 @@ const TodoItem = ({ todo, user }) => {
       async (todos) => {
         const { data: updatedTodo } = await todoUpdater(todo.id, !done);
         const index = todos.findIndex((el) => el.id === todo.id);
-        console.log({ done, updatedTodo });
         todos[index] = updatedTodo;
         return [...todos];
       },

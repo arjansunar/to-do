@@ -27,10 +27,11 @@ export default async function userHandler(req, res) {
         });
 
         res.status(200).json(todos);
+        break;
       } catch (error) {
         res.status(404).json({ error: error.message });
+        break;
       }
-      break;
     case "POST":
       const { task } = body;
       try {
@@ -42,10 +43,11 @@ export default async function userHandler(req, res) {
           },
         });
         res.status(200).json(newTodo);
+        break;
       } catch (error) {
         res.status(404).json({ error: error.message });
+        break;
       }
-      break;
 
     default:
       res.setHeader("Allow", ["GET", "POST"]);
