@@ -32,7 +32,6 @@ export default function Home() {
     }
     // call api after verification
     console.log(user);
-    fetch();
   };
 
   return (

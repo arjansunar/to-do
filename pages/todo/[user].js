@@ -1,16 +1,29 @@
+import useSWR from "swr";
+import { fetcher } from "../../apiUtils";
+
 const Todo = ({ user }) => {
-  const todoList = [
-    {
-      id: 1,
-      task: "walk the dog",
-      done: false,
+  const { data, error } = useSWR(`/api/user/${user}`, fetcher, {
+    onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+      // Never retry on 404.
+      if (error.status === 404) return;
+
+      // Never retry for a specific key.
+      if (key === "/api/user") return;
+
+      // Only retry up to 10 times.
+      if (retryCount >= 5) return;
+
+      // Retry after 5 seconds.
+      setTimeout(() => revalidate({ retryCount }), 5000);
     },
-    {
-      id: 2,
-      task: "learn react",
-      done: true,
-    },
-  ];
+  });
+
+  if (error) return <div>failed to load</div>;
+  if (!data) return <div>loading...</div>;
+
+  console.log(data, error);
+
+  const todoList = data?.todos;
   return (
     <div className=" bg-gray-200 text-gray-800 flex flex-col  items-center h-screen pt-24  ">
       {/* user name  */}
@@ -29,9 +42,9 @@ const Todo = ({ user }) => {
               <svg
                 className="w-3 h-3 mr-3 focus:outline-none"
                 fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
@@ -81,9 +94,9 @@ const TodoItem = ({ todo }) => {
             className=" w-4 h-4 text-gray-600 fill-current"
             // @click="deleteTodo(todo.id)"
             fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             viewBox="0 0 24 24"
             stroke="currentColor"
           >

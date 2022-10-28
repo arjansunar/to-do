@@ -21,7 +21,7 @@ export default async function userHandler(req, res) {
           },
         });
 
-        res.status(200).json({ todos });
+        res.status(200).json(todos);
       } catch (error) {
         res.status(404).json({ error: error.message });
       }
