@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "yarn db:up && next build",
-    "start": "next start",
+    "build": "next build",
+    "start": "npx prisma migrate && next start",
     "lint": "next lint",
     "db:up": "docker-compose up -d",
     "prisma:migrate": "npx prisma migrate dev",
