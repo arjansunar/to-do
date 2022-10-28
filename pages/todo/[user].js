@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
 import {
@@ -6,6 +7,9 @@ import {
   deleteTodo as todoDeleter,
   createTodo,
 } from "../../apiUtils";
+import { BackBtn } from "../../components/backButton";
+import { Error } from "../../components/errorComponent";
+import { Loading } from "../../components/loadingComponent";
 
 const Todo = ({ user }) => {
   const [task, setTask] = useState("");
@@ -13,7 +17,9 @@ const Todo = ({ user }) => {
   const { data: todoList, error } = useSWR(`/api/user/${user}`, fetcher, {
     onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
       // Never retry on 404.
-      if (error.status === 404) return;
+      if (error.response.status === 404) {
+        return;
+      }
 
       // Never retry for a specific key.
       if (key === "/api/user") return;
@@ -26,8 +32,10 @@ const Todo = ({ user }) => {
     },
   });
 
-  if (error) return <div>failed to load</div>;
-  if (!todoList) return <div>loading...</div>;
+  if (error) {
+    return <Error message={error.response.data.error}></Error>;
+  }
+  if (!todoList) return <Loading>loading...</Loading>;
 
   const handleCreateTodo = () => {
     mutate(
@@ -38,10 +46,12 @@ const Todo = ({ user }) => {
       },
       { revalidate: false }
     );
+    setTask("");
   };
 
   return (
-    <div className=" bg-gray-200 text-gray-800 flex flex-col  items-center h-screen pt-24  ">
+    <div className=" bg-gray-200 text-gray-800 flex flex-col  items-center h-screen pt-24">
+      <BackBtn />
       {/* user name  */}
       <h2 className="font-bold text-xl uppercase italic mb-4">
         {`${user}'s Todo`}{" "}

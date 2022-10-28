@@ -12,5 +12,9 @@ export const createTodo = (task, ownerId) => {
   });
 };
 
+export const createUser = (name) => {
+  return axios.post(`/api/user/new/${name}`);
+};
+
 export const deleteTodo = (id) =>
   axios.delete(`/api/todo/${id}`).then((res) => res.data);
