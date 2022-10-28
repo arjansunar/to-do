@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "npx prisma migrate && next start",
+    "build:dev": "yarn db:up && next build",
+    "start": "npx prisma migrate deploy && next start",
     "lint": "next lint",
     "db:up": "docker-compose up -d",
     "prisma:migrate": "npx prisma migrate dev",
